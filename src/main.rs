@@ -22,7 +22,7 @@ struct Args {
     /// Name of the language the program is written in 
     #[arg(short, long)]
     language: Language, 
-    
+
     /// Comment type to remove
     #[arg(short, long, num_args = 1.., value_delimiter = ' ')]
     include: Vec<CommentTypes>,
@@ -66,19 +66,19 @@ fn check_language(args: Args, lines: Vec<&str>) {
     if args.language == Language::Python {
         println!("python");
         let full_comment = Regex::new(r"^#* ").unwrap();
-        let trailing_comment = Regex::new(r"#").unwrap();
+        let trailing_comment = Regex::new(r"^[^#].*#").unwrap();
         let block_comment = Regex::new(r"'''").unwrap();
         check_included(args, full_comment, trailing_comment, block_comment, lines);
     } else if args.language == Language::R {
         println!("r");
         let full_comment = Regex::new(r"^#* ").unwrap();
-        let trailing_comment = Regex::new(r"#").unwrap();
+        let trailing_comment = Regex::new(r"^[^#].*#").unwrap();
         let block_comment = Regex::new(r"^#* ").unwrap();
         check_included(args, full_comment, trailing_comment, block_comment, lines);
     } else if args.language == Language::Rust {
         println!("rust");
         let full_comment = Regex::new(r"^/* ").unwrap();
-        let trailing_comment = Regex::new(r"//").unwrap();
+        let trailing_comment = Regex::new(r"^[^//].*//").unwrap();
         let block_comment = Regex::new(r"/\*").unwrap();
         //let _block_end = Regex::new(r"\*/").unwrap();
         check_included(args, full_comment, trailing_comment, block_comment, lines);
