@@ -1,7 +1,6 @@
-use regex::Regex;
 use clap::Parser;
+use regex::Regex;
 
-// #[derive(clap::ValueEnum)]
 #[derive(clap::ValueEnum, Clone, PartialEq)]
 enum Language {
     Python,
@@ -33,7 +32,6 @@ struct Args {
 fn main() {
     let args = Args::parse();
 
-
     let lines = vec![
         "This has no comment",
         "/ One line to start",
@@ -59,63 +57,77 @@ fn main() {
         "''' this one starts a block comment",
     ];
 
+    check_language(args, lines);
+
+}
+
+
+fn check_language(args: Args, lines: Vec<&str>) {
     if args.language == Language::Python {
         println!("python");
-        // let comment_line = Regex::new(r"^#* ").unwrap();
-        // let trailing_comment = Regex::new(r"#").unwrap();
-        // let block_comment = Regex::new(r"'''").unwrap();
-        check_included(args);
-        //check_lines(comment_line, trailing_comment, block_comment, lines);
+        let full_comment = Regex::new(r"^#* ").unwrap();
+        let trailing_comment = Regex::new(r"#").unwrap();
+        let block_comment = Regex::new(r"'''").unwrap();
+        check_included(args, full_comment, trailing_comment, block_comment, lines);
     } else if args.language == Language::R {
         println!("r");
-        let comment_line = Regex::new(r"^#* ").unwrap();
+        let full_comment = Regex::new(r"^#* ").unwrap();
         let trailing_comment = Regex::new(r"#").unwrap();
         let block_comment = Regex::new(r"^#* ").unwrap();
-        check_lines(comment_line, trailing_comment, block_comment, lines);
+        check_included(args, full_comment, trailing_comment, block_comment, lines);
     } else if args.language == Language::Rust {
         println!("rust");
-        let comment_line = Regex::new(r"^/* ").unwrap();
+        let full_comment = Regex::new(r"^/* ").unwrap();
         let trailing_comment = Regex::new(r"//").unwrap();
-        let block_start = Regex::new(r"/\*").unwrap();
-        let _block_end = Regex::new(r"\*/").unwrap();
-        check_lines(comment_line, trailing_comment, block_start, lines);
+        let block_comment = Regex::new(r"/\*").unwrap();
+        //let _block_end = Regex::new(r"\*/").unwrap();
+        check_included(args, full_comment, trailing_comment, block_comment, lines);
     } else {
         ()
     }
-
 }
 
-fn check_lines(comment_line: Regex, trailing_comment: Regex, block_comment: Regex, lines: Vec<&str>) {
-    for line in &lines {
-        if comment_line.is_match(&line) {
-            println!("leading: {}", line);
-        } else if trailing_comment.is_match(&line) {
-            println!("trailing: {}", line);
-        } else if block_comment.is_match(&line) {
-            println!("block: {}", line);
-        } else {
-            println!("false: {}", line);
-        }
-    }
-}
-
-fn check_included(args: Args) {
+fn check_included(args: Args, full_comment: regex::Regex, trailing_comment: regex::Regex, block_comment: regex::Regex, lines: Vec<&str>) {
     println!("INCLUDES: {:?}", args.include);
     if args.include.contains(&CommentTypes::FullLine) && args.include.contains(&CommentTypes::TrailingLine) && args.include.contains(&CommentTypes::Block) {
         println!("Full Line + Trailing Line + Block");
+        let filters = vec![full_comment.clone(), trailing_comment.clone(), block_comment.clone()];
+        filter_lines(filters, lines);
     } else if args.include.contains(&CommentTypes::FullLine) && args.include.contains(&CommentTypes::TrailingLine) {
         println!("Full Line + Trailing Line");
+        let filters = vec![full_comment.clone(), trailing_comment.clone()];
+        filter_lines(filters, lines);
     } else if args.include.contains(&CommentTypes::FullLine) && args.include.contains(&CommentTypes::Block) {
         println!("Full Line + Block");
+        let filters = vec![full_comment.clone(), block_comment.clone()];
+        filter_lines(filters, lines);
     } else if args.include.contains(&CommentTypes::TrailingLine) && args.include.contains(&CommentTypes::Block) {
         println!("Trailing Line + Block");
+        let filters = vec![trailing_comment.clone(), block_comment.clone()];
+        filter_lines(filters, lines);
     } else if args.include.contains(&CommentTypes::FullLine) {
         println!("FullLine");
+        let filters = vec![full_comment.clone()];
+        filter_lines(filters, lines);
     } else if args.include.contains(&CommentTypes::TrailingLine) {
         println!("TrailingLine");
+        let filters = vec![trailing_comment.clone()];
+        filter_lines(filters, lines);
     } else if args.include.contains(&CommentTypes::Block) {
         println!("Block");
+        let filters = vec![block_comment.clone()];
+        filter_lines(filters, lines);
     } else {
         println!("[ Error ]");
+    }
+}
+
+fn filter_lines(filters: Vec<Regex>, lines: Vec<&str>) {
+    for line in &lines {
+        for filter in &filters {
+            if filter.is_match(&line) {
+                println!("{}: {}", filter, line);
+            }
+        }
     }
 }
