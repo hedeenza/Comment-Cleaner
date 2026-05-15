@@ -9,17 +9,24 @@ enum Language {
     Rust,
 }
 
+#[derive(clap::ValueEnum, Clone, Debug, PartialEq)]
+enum CommentTypes {
+    FullLine,
+    TrailingLine,
+    Block,
+}
+
 #[derive(Parser)]
 #[command(version, about, long_about = None)]
 struct Args {
     #[clap(value_enum)]
-    // Name of the language the program is written in 
+    /// Name of the language the program is written in 
     #[arg(short, long)]
     language: Language, 
     
-    // Number of times to run it
-    // #[arg(short, long, default_value_t = 1)]
-    // count: u8, 
+    /// Comment type to remove
+    #[arg(short, long, num_args = 1.., value_delimiter = ' ')]
+    include: Vec<CommentTypes>,
 
 }
 
@@ -54,10 +61,11 @@ fn main() {
 
     if args.language == Language::Python {
         println!("python");
-        let comment_line = Regex::new(r"^#* ").unwrap();
-        let trailing_comment = Regex::new(r"#").unwrap();
-        let block_comment = Regex::new(r"'''").unwrap();
-        check_lines(comment_line, trailing_comment, block_comment, lines);
+        // let comment_line = Regex::new(r"^#* ").unwrap();
+        // let trailing_comment = Regex::new(r"#").unwrap();
+        // let block_comment = Regex::new(r"'''").unwrap();
+        check_included(args);
+        //check_lines(comment_line, trailing_comment, block_comment, lines);
     } else if args.language == Language::R {
         println!("r");
         let comment_line = Regex::new(r"^#* ").unwrap();
@@ -88,5 +96,26 @@ fn check_lines(comment_line: Regex, trailing_comment: Regex, block_comment: Rege
         } else {
             println!("false: {}", line);
         }
+    }
+}
+
+fn check_included(args: Args) {
+    println!("INCLUDES: {:?}", args.include);
+    if args.include.contains(&CommentTypes::FullLine) && args.include.contains(&CommentTypes::TrailingLine) && args.include.contains(&CommentTypes::Block) {
+        println!("Full Line + Trailing Line + Block");
+    } else if args.include.contains(&CommentTypes::FullLine) && args.include.contains(&CommentTypes::TrailingLine) {
+        println!("Full Line + Trailing Line");
+    } else if args.include.contains(&CommentTypes::FullLine) && args.include.contains(&CommentTypes::Block) {
+        println!("Full Line + Block");
+    } else if args.include.contains(&CommentTypes::TrailingLine) && args.include.contains(&CommentTypes::Block) {
+        println!("Trailing Line + Block");
+    } else if args.include.contains(&CommentTypes::FullLine) {
+        println!("FullLine");
+    } else if args.include.contains(&CommentTypes::TrailingLine) {
+        println!("TrailingLine");
+    } else if args.include.contains(&CommentTypes::Block) {
+        println!("Block");
+    } else {
+        println!("[ Error ]");
     }
 }
