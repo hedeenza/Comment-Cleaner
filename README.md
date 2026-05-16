@@ -8,9 +8,12 @@
 - macOS users will need to compile from source.
 
 ## Running the CLI
-`$ ./comment-cleaner --language <LANGUAGE>`
+`$ ./comment-cleaner --file <FILE-NAME> --language <LANGUAGE> --include <CommentType(s)>`
 
-- Supported languages (-l / --lanaguage) Python, R, Rust.
+- Select file (-f / --file): Enter the name of the file you want to clean.
+- Supported languages (-l / --language):  Python, R, Rust (<python>, <r>, <rust>)
+- Comment types (-i / --include): full line comments, trailing comments, block comments (<full>, <trailing>, <block>)
+- Output as "<cleaned_script>"
 - Ensure the program has executable permissions.
 
 ## Building from Source
@@ -27,7 +30,7 @@ Add the following lines to your `.bashrc` file:
 # Source Code Comment Cleaner
 export PATH="$PATH:/home/path/to/directory/where/this/program/lives"
 
-alias cc="comment-cleaner"
+alias cc="comment_cleaner"
 ```
 
 ## License
