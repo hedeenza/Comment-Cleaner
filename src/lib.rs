@@ -39,11 +39,13 @@ where
     R: std::io::Read,
 {
     if args.language == Language::Python {
+        let comment_character = "#";
         let full_comment = Regex::new(r"^#* ").unwrap();
         let trailing_comment = Regex::new(r"^[^#].*#").unwrap();
         let block_comment = Regex::new(r"'''").unwrap();
         check_included(
             args,
+            comment_character,
             full_comment,
             trailing_comment,
             block_comment,
@@ -51,11 +53,13 @@ where
             output_file,
         );
     } else if args.language == Language::R {
+        let comment_character = "#";
         let full_comment = Regex::new(r"^#* ").unwrap();
         let trailing_comment = Regex::new(r"^[^#].*#").unwrap();
         let block_comment = Regex::new(r"^#* ").unwrap();
         check_included(
             args,
+            comment_character,
             full_comment,
             trailing_comment,
             block_comment,
@@ -63,11 +67,13 @@ where
             output_file,
         );
     } else if args.language == Language::Rust {
+        let comment_character = "//";
         let full_comment = Regex::new(r"^/* ").unwrap();
         let trailing_comment = Regex::new(r"^[^//].*//").unwrap();
         let block_comment = Regex::new(r"/\*|\*/").unwrap();
         check_included(
             args,
+            comment_character,
             full_comment,
             trailing_comment,
             block_comment,
@@ -79,6 +85,7 @@ where
 
 pub fn check_included<R>(
     args: Args,
+    comment_character: &str,
     full_comment: regex::Regex,
     trailing_comment: regex::Regex,
     block_comment: regex::Regex,
@@ -96,16 +103,21 @@ pub fn check_included<R>(
         for line in input_reader.lines() {
             let line = line.unwrap();
             if keep_line {
-                if block_comment.is_match(&line) {
+                if block_comment.is_match(&line.trim()) {
                     keep_line = !keep_line;
                     continue;
-                } else if full_comment.is_match(&line) | trailing_comment.is_match(&line) {
+                } else if full_comment.is_match(&line.trim()) {
                     continue;
+                } else if trailing_comment.is_match(&line.trim()) {
+                    if let Some(index) = line.find(comment_character) {
+                        let clean_line = &line[0..index];
+                        let _ = writeln!(output_file, "{}", &clean_line);
+                    }
                 } else {
                     let _ = writeln!(output_file, "{}", &line);
                 }
             } else if !keep_line {
-                if block_comment.is_match(&line) {
+                if block_comment.is_match(&line.trim()) {
                     keep_line = !keep_line;
                     continue;
                 }
@@ -118,8 +130,13 @@ pub fn check_included<R>(
     {
         for line in input_reader.lines() {
             let line = line.unwrap();
-            if full_comment.is_match(&line) | trailing_comment.is_match(&line) {
+            if full_comment.is_match(&line.trim()) {
                 continue;
+            } else if trailing_comment.is_match(&line.trim()) {
+                if let Some(index) = line.find(comment_character) {
+                    let clean_line = &line[0..index];
+                    let _ = writeln!(output_file, "{}", &clean_line);
+                }
             } else {
                 let _ = writeln!(output_file, "{}", &line);
             }
@@ -130,16 +147,16 @@ pub fn check_included<R>(
         for line in input_reader.lines() {
             let line = line.unwrap();
             if keep_line {
-                if block_comment.is_match(&line) {
+                if block_comment.is_match(&line.trim()) {
                     keep_line = !keep_line;
                     continue;
-                } else if full_comment.is_match(&line) {
+                } else if full_comment.is_match(&line.trim()) {
                     continue;
                 } else {
                     let _ = writeln!(output_file, "{}", &line);
                 }
             } else if !keep_line {
-                if block_comment.is_match(&line) {
+                if block_comment.is_match(&line.trim()) {
                     keep_line = !keep_line;
                     continue;
                 }
@@ -153,16 +170,19 @@ pub fn check_included<R>(
         for line in input_reader.lines() {
             let line = line.unwrap();
             if keep_line {
-                if block_comment.is_match(&line) {
+                if block_comment.is_match(&line.trim()) {
                     keep_line = !keep_line;
                     continue;
-                } else if trailing_comment.is_match(&line) {
-                    continue;
+                } else if trailing_comment.is_match(&line.trim()) {
+                    if let Some(index) = line.find(comment_character) {
+                        let clean_line = &line[0..index];
+                        let _ = writeln!(output_file, "{}", &clean_line);
+                    }
                 } else {
                     let _ = writeln!(output_file, "{}", &line);
                 }
             } else if !keep_line {
-                if block_comment.is_match(&line) {
+                if block_comment.is_match(&line.trim()) {
                     keep_line = !keep_line;
                     continue;
                 }
@@ -173,7 +193,7 @@ pub fn check_included<R>(
     } else if args.include.contains(&CommentTypes::Full) {
         for line in input_reader.lines() {
             let line = line.unwrap();
-            if full_comment.is_match(&line) {
+            if full_comment.is_match(&line.trim()) {
                 continue;
             } else {
                 let _ = writeln!(output_file, "{}", &line);
@@ -182,8 +202,11 @@ pub fn check_included<R>(
     } else if args.include.contains(&CommentTypes::Trailing) {
         for line in input_reader.lines() {
             let line = line.unwrap();
-            if trailing_comment.is_match(&line) {
-                continue;
+            if trailing_comment.is_match(&line.trim()) {
+                if let Some(index) = line.find(comment_character) {
+                    let clean_line = &line[0..index];
+                    let _ = writeln!(output_file, "{}", &clean_line);
+                }
             } else {
                 let _ = writeln!(output_file, "{}", &line);
             }
@@ -192,14 +215,14 @@ pub fn check_included<R>(
         for line in input_reader.lines() {
             let line = line.unwrap();
             if keep_line {
-                if block_comment.is_match(&line) {
+                if block_comment.is_match(&line.trim()) {
                     keep_line = !keep_line;
                     continue;
                 } else {
                     let _ = writeln!(output_file, "{}", &line);
                 }
             } else if !keep_line {
-                if block_comment.is_match(&line) {
+                if block_comment.is_match(&line.trim()) {
                     keep_line = !keep_line;
                     continue;
                 }
