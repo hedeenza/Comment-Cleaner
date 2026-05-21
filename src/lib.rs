@@ -6,6 +6,7 @@ use std::io::{BufRead, BufReader, Write};
 // Create an enum to hold the language options
 #[derive(clap::ValueEnum, Clone, PartialEq)]
 pub enum Language {
+    Bash,
     Python,
     R,
     Rust,
@@ -45,8 +46,25 @@ pub fn check_language<R>(args: Args, input_reader: BufReader<R>, output_file: Fi
 where
     R: std::io::Read,
 {
+    // If Bash was selected...
+    if args.language == Language::Bash {
+        // Set the comment character parameters for Python
+        let comment_character = "#";
+        let full_comment = Regex::new(r"^#* ").unwrap();
+        let trailing_comment = Regex::new(r"^[^#].*#").unwrap();
+        let block_comment = Regex::new(r"^: '*|^'").unwrap();
+        // Run the funciton to check which comment types are to be processed
+        check_included(
+            args,
+            comment_character,
+            full_comment,
+            trailing_comment,
+            block_comment,
+            input_reader,
+            output_file,
+        );
     // If Python was selected...
-    if args.language == Language::Python {
+    } else if args.language == Language::Python {
         // Set the comment character parameters for Python
         let comment_character = "#";
         let full_comment = Regex::new(r"^#* ").unwrap();
